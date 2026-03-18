@@ -8,12 +8,12 @@ from form import RegisterForm
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "your_secret_key_here"
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    "postgresql://postgres:Nopassword%4003@localhost/test"
-)
+
+# Default local DB URI for development. In prod (Render), set DATABASE_URL env var.
+default_db_url = "postgresql://postgres:Nopassword%4003@localhost/test"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL or default_db_url
 
 loginmanager = LoginManager()
 loginmanager.init_app(app)
