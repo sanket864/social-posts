@@ -7,13 +7,17 @@ from form import RegisterForm
 
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "your_secret_key_here"
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "your_secret_key_here")
 
-# Default local DB URI for development. In prod (Render), set DATABASE_URL env var.
-default_db_url = "postgresql://postgres:Nopassword%4003@localhost/test"
+# Database config: prefer Render's DATABASE_URL, fallback to sqlite for local development.
 DATABASE_URL = os.getenv("DATABASE_URL")
-
-app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL or default_db_url
+if DATABASE_URL:
+    # SQLAlchemy 2.x requires postgresql:// not postgres://
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+else:
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///local.db"
 
 loginmanager = LoginManager()
 loginmanager.init_app(app)
@@ -61,7 +65,7 @@ def login():
     return render_template("login.html", error="Invalid credentials")
 
 
-@app.route("/dashboard<int:user_id>")
+@app.route("/dashboard/<int:user_id>")
 @login_required
 def dashboard(user_id):
     return render_template("dashboard.html", user_id=user_id, current_user=current_user.username)
